@@ -82,16 +82,18 @@
   (and
    (< (second cell) height)
    (< (first cell) (dec width))
-   (contains?
-    board
-    (go-northeast cell)))))
+   (not
+    (contains?
+     board
+     (go-northeast cell))))))
 (defn make-east-free [width height]
  (fn [board cell]
   (and
    (< (first cell) (dec width))
-   (contains?
-    board
-    (go-east cell)))))
+   (not
+    (contains?
+     board
+     (go-east cell))))))
 ; now the heart of the problem: decide where to move next based on
 ; local traffic laws, i.e. keep right or whatever
 (defn make-whereto-keepright
@@ -132,8 +134,8 @@
     go-northeast* (if mirror go-northeast go-northwest)]
    (cond
     (north*? board cell) (go-north* cell)
-    (west*? board cell) (go-west* cell)
-    (east*? board cell) (go-east* cell)
     (northwest*? board cell) (go-northwest* cell)
     (northeast*? board cell) (go-northeast* cell)
+    (west*? board cell) (go-west* cell)
+    (east*? board cell) (go-east* cell)
     :else cell))))
