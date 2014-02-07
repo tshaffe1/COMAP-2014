@@ -16,47 +16,79 @@
 ; seeing car used in this way will annoy the hell out of any old-school
 ; lisp programmers.
 
-; each car is a hash-map of position (as a vector) to another hashmap.
-; [x y]: {:mood              ; the odds of bad things are proportional
-;         :inv-speed n,      ; the car will move every nth turn
-;         :move-timer n,     ; records n turns since the last move
-;         :delay-timer n}    ; unable to move for n turns.
-;                            ; this one is checked before :inf-speed
+; each car is a hashmap of properties.
+; a board is a hashmap of cars keyed by position vectors.
+; [x y]: {:speed n1,               ; the car will move every nth turn
+;         :move-timer n2,          ; records n turns since the last move
+;         :delay-timer n3,         ; unable to move for n turns.
+;         :stats {:ticks n4,       ; the stats are pretty much self-
+;                 :crashes n5,     ; explanatory.
+;                 :holdups n6}}    ;
 
 ; first, some abstractions that will clarify later logic
+(defn next-move-timer [car]
+ (mod (inc (:move-timer car)) (:speed car)))
+(defn calc-delay-timer [car crash]
+ (if (zero? crash)
+  (max 0 (dec (:delay-timer car)))
+  (+ crash (:delay-timer car))))
+(defn calc-crash-count [car crash]
+ (+ (:crashes (:stats car)) (if (zero? crash) 0 1)))
+(defn next-tick [car]
+ (inc (:ticks (:stats car))))
+(defn held-up? [before after]
+ (= before after))
 (defn wants-to-advance? [car]
  (= 0
   (mod
    (:move-timer car)
-   (:inv-speed car))))
+   (:speed car))))
 (defn allowed-to-advance? [car]
  (= 0 (:delay-timer car)))
-(defn tick [car]
- (assoc car
-  :move-timer (mod (inc (:move-timer car)) (:inv-speed car))
-  :delay-timer (max 0 (dec (:delay-timer car )))))
-(defn go-west [cell]
+(defn calc-holdup [car before after]
+ (if
+  (and
+   (wants-to-advance? car)
+   (held-up? before after))
+  (inc (:holdups (:stats car)))
+  (:holdups (:stats car))))
+; these aren't strictly necessary, but abstracting them helps readability
+(defn west-of [cell]
  (vector
   (dec (first cell))
   (second cell)))
-(defn go-northwest [cell]
+(defn northwest-of  [cell]
  (vector
   (dec (first cell))
   (inc (second cell))))
-(defn go-north [cell]
+(defn north-of [cell]
  (vector
   (first cell)
   (inc (second cell))))
-(defn go-northeast [cell]
+(defn northeast-of  [cell]
  (vector
   (inc (first cell))
   (inc (second cell))))
-(defn go-east [cell]
+(defn east-of  [cell]
  (vector
   (inc (first cell))
   (second cell)))
-; the following functions generate functions that check the availabilities
-; of neighboring cells based on board dimensions.
+; NOTE: these aren't used anywhere yet and if they don't find use, CULL!
+(defn cars-vertical [board cell]
+ (filter #(not (nil? %)) (get board (north-of cell))))
+(defn cars-diagonal [board cell]
+ (filter (partial contains? #{(northeast-of cell)
+                              (northwest-of cell)}) (keys board)))
+(defn cars-horizontal [board cell]
+ (filter (partial contains? #{(east-of cell)
+                              (west-of cell)}) (keys board)))
+(defn cars-adjacent [board cell]
+ (concat
+  (cars-vertical board cell)
+  (cars-diagonal board cell)
+  (cars-horizontal board cell)))
+; the following functions generate functions that check if neighboring
+; cells are free based on board dimensions.
 (defn make-west-free [width height]
  (fn [board cell]
   (and
@@ -64,7 +96,7 @@
    (not
     (contains?
      board
-     (go-west cell))))))
+     (west-of cell))))))
 (defn make-northwest-free [width height]
  (fn [board cell]
   (and
@@ -73,7 +105,7 @@
    (not
     (contains?
      board
-     (go-northwest cell))))))
+     (northwest-of cell))))))
 (defn make-north-free [width height]
  (fn [board cell]
   (and
@@ -81,7 +113,7 @@
    (not
     (contains?
      board
-     (go-north cell))))))
+     (north-of cell))))))
 (defn make-northeast-free [width height]
  (fn [board cell]
   (and
@@ -90,7 +122,7 @@
    (not
     (contains?
      board
-     (go-northeast cell))))))
+     (northeast-of cell))))))
 (defn make-east-free [width height]
  (fn [board cell]
   (and
@@ -98,10 +130,10 @@
    (not
     (contains?
      board
-     (go-east cell))))))
+     (east-of cell))))))
 ; now the heart of the problem: decide where to move next based on
 ; local traffic laws, i.e. keep right or whatever
-(defn make-whereto-keepright
+(defn make-whereto-keep-right
  [west?
   northwest?
   north?
@@ -109,15 +141,15 @@
   east?]
  (fn [board cell]
   (cond
-   (northeast? board cell) (go-northeast cell)
-   (east? board cell) (go-east cell)
-   (north? board cell) (go-north cell)
-   (northwest? board cell) (go-northwest cell)
-   (west? board cell) (go-west cell)
+   (northeast? board cell) (northeast-of cell)
+   (east? board cell) (east-of  cell)
+   (north? board cell) (north-of cell)
+   (northwest? board cell) (northwest-of cell)
+   (west? board cell) (west-of cell)
    :else cell)))
 ; for the symmetric version, a choice must be made if two equivalent paths
 ; are available. left and right are randomly flipped on each decision
-; to make sure this rule doesn't degenerate to keepright
+; to make sure this rule doesn't degenerate to keep-right
 (defn make-whereto-wherever
  [west?
   northwest?
@@ -128,28 +160,38 @@
   (let
    [mirror (= 0 (rand-int 2))
     north*? north?
-    go-north* go-north
+    north-of* north-of
     west*? (if mirror west? east?)
-    go-west* (if mirror go-west go-east)
+    west-of* (if mirror west-of east-of )
     east*? (if mirror east? west?)
-    go-east* (if mirror go-east go-west)
+    east-of* (if mirror east-of  west-of)
     northwest*? (if mirror northwest? northeast?)
-    go-northwest* (if mirror go-northwest go-northeast)
+    northwest-of* (if mirror northwest-of  northeast-of)
     northeast*? (if mirror northeast? northwest?)
-    go-northeast* (if mirror go-northeast go-northwest)]
+    northeast-of* (if mirror northeast-of  northwest-of)]
    (cond
-    (north*? board cell) (go-north* cell)
-    (northwest*? board cell) (go-northwest* cell)
-    (northeast*? board cell) (go-northeast* cell)
-    (west*? board cell) (go-west* cell)
-    (east*? board cell) (go-east* cell)
+    (north*? board cell) (north-of* cell)
+    (northwest*? board cell) (northwest-of* cell)
+    (northeast*? board cell) (northeast-of* cell)
+    (west*? board cell) (west-of* cell)
+    (east*? board cell) (east-of* cell)
     :else cell))))
-(defn make-move [whereto]
+; now bring everything together.
+(defn make-tick [whereto]
  (fn [board x]
   (let
    [cell (first x)
-    car (second x)]
-   (if
-    (wants-to-advance? car)
-    (print "TODO: move car, allow accidents")
-    (vector cell (tick car))))))
+    car (second x)
+    go-time? (and (wants-to-advance? car)
+                 (allowed-to-advance? car))
+    cell* (if go-time? (whereto board cell) cell)
+    crash 0]
+   (vector
+    cell*
+    (assoc car
+     :move-timer (next-move-timer car)
+     :delay-timer (calc-delay-timer car crash)
+     :stats (assoc (:stats car)
+             :ticks (next-tick car)
+             :holdups (calc-holdup car cell cell*)
+             :crashes (calc-crash-count car crash)))))))
