@@ -17,7 +17,8 @@
 ; lisp programmers.
 
 ; each car is a hash-map of position (as a vector) to another hashmap.
-; [x y]: {:inv-speed n,      ; the car will move every nth turn
+; [x y]: {:mood              ; the odds of bad things are proportional
+;         :inv-speed n,      ; the car will move every nth turn
 ;         :move-timer n,     ; records n turns since the last move
 ;         :delay-timer n}    ; unable to move for n turns.
 ;                            ; this one is checked before :inf-speed
@@ -26,10 +27,14 @@
 (defn wants-to-advance? [car]
  (= 0
   (mod
-   (get car :move-timer)
-   (get car :inv-speed))))
+   (:move-timer car)
+   (:inv-speed car))))
 (defn allowed-to-advance? [car]
- (= 0 (get car :delay-timer)))
+ (= 0 (:delay-timer car)))
+(defn tick [car]
+ (assoc car
+  :move-timer (mod (inc (:move-timer car)) (:inv-speed car))
+  :delay-timer (max 0 (dec (:delay-timer car )))))
 (defn go-west [cell]
  (vector
   (dec (first cell))
@@ -139,3 +144,12 @@
     (west*? board cell) (go-west* cell)
     (east*? board cell) (go-east* cell)
     :else cell))))
+(defn make-move [whereto]
+ (fn [board x]
+  (let
+   [cell (first x)
+    car (second x)]
+   (if
+    (wants-to-advance? car)
+    (print "TODO: move car, allow accidents")
+    (vector cell (tick car))))))
