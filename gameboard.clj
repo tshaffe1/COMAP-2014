@@ -16,7 +16,6 @@
 ;:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::;
 (ns gameboard
  (:load "car"))
-(defmacro dbg[x] `(let [x# ~x] (println "dbg:" '~x "=" x#) x#))
 (defn make-ticker-keepright
  [width height]
  (car/make-ticker

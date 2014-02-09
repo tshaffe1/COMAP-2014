@@ -15,7 +15,6 @@
 ; along with this program.  If not, see <http://www.gnu.org/licenses/>. ;
 ;:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::;
 (ns monte-carlo)
-(defmacro dbg[x] `(let [x# ~x] (println "dbg:" '~x "=" x#) x#))
 (def ziggurat
  {[1.000000 0.963929] 0.086916,
   [0.963929 0.936858] 0.115810,
@@ -253,6 +252,7 @@
  ([iter road-length ticker board-spec car-specs]
   (trial iter road-length ticker board-spec car-specs 0 (list)))
  ([iter road-length ticker board-spec car-specs i trial-data]
+  (println "  starting trial...")
   (if
    (>= i iter)
    trial-data

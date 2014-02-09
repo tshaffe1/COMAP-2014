@@ -33,7 +33,6 @@
 ;                 :worst-crash n,
 ;                 :holdups n}}
 (ns car)
-(defmacro dbg[x] `(let [x# ~x] (println "dbg:" '~x "=" x#) x#))
 ; first, some abstractions that will clarify later logic
 (defn next-move-timer [car]
  (mod (inc (or (:move-timer car) 0))

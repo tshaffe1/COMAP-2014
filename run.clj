@@ -18,7 +18,6 @@
 (ns run
  (:load "monte-carlo"
         "gameboard"))
-(defmacro dbg[x] `(let [x# ~x] (println "dbg:" '~x "=" x#) x#))
 (def trial-count 64)
 (def road-length 256)
 (defn many-cars [lanes] (/ (* road-length lanes) 4))
