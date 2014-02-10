@@ -65,7 +65,7 @@
 (defn pbm
  ([width height board]
   (pbm width height board
-   (str "P1" \newline width \newline height \newline) 0 0))
+   (str "P1" \newline width \space height \newline) 0 0))
  ([width height board s x y]
   (if
    (= x (dec width))
@@ -78,6 +78,22 @@
    (recur
     width height board
     (str s (if (contains? board [x y]) 1 0) \space) (inc x) y))))
+(defn ppm
+ ([width height board]
+  (pbm width height board
+   (str "P3" \newline width \space height \newline 8 \newline) 0 0))
+ ([width height board s x y]
+  (if
+   (= x (dec width))
+   (if
+    (= y (dec height))
+    (str s (if (contains? board [x y]) 255 0) \space 0 \space 0 \newline)
+    (recur
+     width height board
+     (str s (if (contains? board [x y]) 255 0) \space 0 \space 0 \newline) 0 (inc y)))
+   (recur
+    width height board
+    (str s (if (contains? board [x y]) 255 0) \space 0 \space 0 \space) (inc x) y))))
 (defn make-loop
  [ticker height]
  (fn tick*
@@ -111,7 +127,7 @@
       (conj past board)))))))
 (defn dump-history
  ([renderer path-format history]
-  (print "dumping to disk...")
+  (println "dumping to disk...")
   (dump-history renderer path-format (reverse history) 0))
  ([renderer path-format history i]
   (if

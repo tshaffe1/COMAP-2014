@@ -252,7 +252,7 @@
  ([iter road-length ticker board-spec car-specs]
   (trial iter road-length ticker board-spec car-specs 0 (list)))
  ([iter road-length ticker board-spec car-specs i trial-data]
-  (println "  starting trial...")
+  (println "starting trial...")
   (if
    (>= i iter)
    trial-data

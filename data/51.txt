@@ -1,0 +1,1 @@
+{:ticks 511.7331792102632, :crash-count 0.0, :worst-crash 0.0, :holdups 0.007362546703915692, :avg-speed 0.25127400696899416}

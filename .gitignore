@@ -1,3 +1,6 @@
+*.ogv
+*.ppm
+*.pmb
 *.swp
 *.bak
 pom.xml

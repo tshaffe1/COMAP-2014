@@ -132,7 +132,7 @@
    (and
     (allowed-to-advance? (get board cell))
     (< ((fn [x] (* x x)) (rand))
-       (* 1e-5 speed-difference**
+       (* 1e-11 speed-difference**
           (+
           (or (:mood (or (get board cell) {})) 1)
           (or (:min-mood (or (get board cell) {})) 0)))))
