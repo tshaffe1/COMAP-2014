@@ -144,4 +144,4 @@
 ;(go "data/64.txt" 25 wherever
 ;    (fn [lanes] (/ (* road-length lanes) 2)) good-roads normal-speed)
 
-(pix "/tmp/comap/frame%05d.ppm" colored 25 4 wherever some-cars good-roads normal-speed)
+;(pix "render/frame%05d.ppm" colored 100 11 keepright few-cars good-roads normal-speed)

@@ -17,7 +17,7 @@
 (ns gameboard
  (:load "car"))
 (defn logistic [x]
- (/ (inc (java.lang.Math/exp (- x)))))
+ (dec (/ 2 (inc (java.lang.Math/exp (- x))))))
 (defn make-ticker-keepright
  [width height]
  (car/make-ticker
@@ -83,16 +83,29 @@
 (defn rainbow [board cell]
  (if (contains? board cell)
      (str
-      (if
-       (< 0
-        (or (get (or (get (or (get board cell) {}) :stats) {})
-                 :crashes) 0))
-       255
-       0) \space
-      (* 255 (logistic
-              (/ 4
-               (or (get (or (get board cell) {}) :speed) 1)))) \space
-      (* 255 (logistic (/ (or (get (or (get (or (get board cell) {}) :stats) {}) :holdups) 0) 25))))
+      (int
+       (* 255 (logistic
+               (/ (or
+                   (get
+                    (or
+                     (get
+                      (or
+                       (get board cell) {})
+                      :stats) {})
+                    :crashes) 0) 0.25)))) \space
+      (int
+       (* 255 (logistic
+               (/ 5
+                (or (get (or (get board cell) {}) :speed) 1))))) \space
+      (int
+       (* 255 (logistic (/ (or
+                            (get
+                             (or
+                              (get
+                               (or
+                                (get board cell) {})
+                               :stats) {})
+                             :holdups) 0) 2)))))
      "0 0 0"))
 (defn ppm
  ([colorizer width height board]
