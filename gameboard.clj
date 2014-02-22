@@ -16,6 +16,8 @@
 ;:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::;
 (ns gameboard
  (:load "car"))
+(defn logistic [x]
+ (/ (inc (java.lang.Math/exp (- x)))))
 (defn make-ticker-keepright
  [width height]
  (car/make-ticker
@@ -78,22 +80,36 @@
    (recur
     width height board
     (str s (if (contains? board [x y]) 1 0) \space) (inc x) y))))
+(defn rainbow [board cell]
+ (if (contains? board cell)
+     (str
+      (if
+       (< 0
+        (or (get (or (get (or (get board cell) {}) :stats) {})
+                 :crashes) 0))
+       255
+       0) \space
+      (* 255 (logistic
+              (/ 4
+               (or (get (or (get board cell) {}) :speed) 1)))) \space
+      (* 255 (logistic (/ (or (get (or (get (or (get board cell) {}) :stats) {}) :holdups) 0) 25))))
+     "0 0 0"))
 (defn ppm
- ([width height board]
-  (pbm width height board
-   (str "P3" \newline width \space height \newline 8 \newline) 0 0))
- ([width height board s x y]
+ ([colorizer width height board]
+  (ppm colorizer width height board
+   (str "P3" \newline width \space height \newline 255 \newline) 0 0))
+ ([colorizer width height board  s x y]
   (if
    (= x (dec width))
    (if
     (= y (dec height))
-    (str s (if (contains? board [x y]) 255 0) \space 0 \space 0 \newline)
+    (str s (colorizer board [x y]) \newline)
     (recur
-     width height board
-     (str s (if (contains? board [x y]) 255 0) \space 0 \space 0 \newline) 0 (inc y)))
+     colorizer width height board
+     (str s (colorizer board [x y]) \newline) 0 (inc y)))
    (recur
-    width height board
-    (str s (if (contains? board [x y]) 255 0) \space 0 \space 0 \space) (inc x) y))))
+    colorizer width height board
+    (str s (colorizer board [x y]) \space \space) (inc x) y))))
 (defn make-loop
  [ticker height]
  (fn tick*

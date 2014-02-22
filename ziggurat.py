@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# copyright 2014 Tim Shaffer↩
+# copyright 2014 Tim Shaffer
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

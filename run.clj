@@ -19,7 +19,7 @@
  (:load "monte-carlo"
         "gameboard"))
 (def monochrome gameboard/pbm)
-(def colored gameboard/ppm)
+(def colored (partial gameboard/ppm gameboard/rainbow))
 (def trial-count 64)
 (def road-length 256)
 (def short-road-length 128)
@@ -143,3 +143,5 @@
 ;(go "data/63.txt" 4 wherever some-cars good-roads {:scale 2 :offset 8})
 ;(go "data/64.txt" 25 wherever
 ;    (fn [lanes] (/ (* road-length lanes) 2)) good-roads normal-speed)
+
+(pix "/tmp/comap/frame%05d.ppm" colored 25 4 wherever some-cars good-roads normal-speed)
